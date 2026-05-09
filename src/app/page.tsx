@@ -131,7 +131,7 @@ export default function PredictionPage() {
       <div className="max-w-4xl mx-auto text-center mb-16">
         <div className="inline-flex items-center gap-2 px-4 py-2 rounded-full bg-blue-50 text-blue-600 text-sm font-bold mb-6">
           <Sparkles className="w-4 h-4" />
-          Powered by AI Technology
+          Powered by CS406 AI Team
         </div>
         <h1 className="text-5xl font-black text-slate-900 tracking-tight mb-6">
           Phân loại <span className="text-blue-600">Buồng Chuối</span>

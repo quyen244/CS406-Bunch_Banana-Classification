@@ -1,0 +1,29 @@
+FROM tensorflow/tensorflow:latest-gpu
+
+# Cài đặt system dependencies cho OpenCV
+RUN apt-get update && apt-get install -y \
+    libgl1-mesa-glx \
+    libglib2.0-0 \
+    && rm -rf /var/lib/apt/lists/*
+
+WORKDIR /app
+
+# Cài đặt thư viện Python (Thêm fastapi, uvicorn, multipart)
+RUN pip install --no-cache-dir \
+    opencv-python-headless \
+    numpy \
+    fastapi \
+    uvicorn \
+    python-multipart
+
+# Tạo thư mục chứa model
+RUN mkdir /models
+
+# Copy theo đúng cấu trúc bạn mô tả
+# /inference và /src/backend nằm cùng cấp ngoài máy thật
+COPY ./inference /app/inference
+COPY ./src/backend /app/backend
+# Nếu schema.py nằm trong src/backend thì đường dẫn import sẽ là .schema
+
+# Chạy server với Uvicorn (Chuẩn production hơn fastapi dev)
+CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
