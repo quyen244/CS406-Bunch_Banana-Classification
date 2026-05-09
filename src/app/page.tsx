@@ -10,7 +10,7 @@ import ImageCropper from '@/components/ImageCropper';
 import PredictionResult from '@/components/PredictionResult';
 
 // --- MOCK API LOGIC (Thay thế bằng URL API thật của bạn) ---
-const PREDICT_API_URL = '/api/predict'; // Cập nhật URL API của bạn ở đây
+const PREDICT_API_URL = 'http://127.0.0.1:8000/predict'; // Cập nhật URL API của bạn ở đây
 
 interface PredictionResponse {
   label: string;
