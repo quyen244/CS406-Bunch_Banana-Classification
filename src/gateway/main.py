@@ -14,9 +14,15 @@ import time
 import httpx
 from fastapi import FastAPI, File, HTTPException, Query, UploadFile
 from fastapi.middleware.cors import CORSMiddleware
-
+from typing import Dict , List , Optional
 from gateway.schema import HealthStatus, PredictResponse
-from inference.ml_model_inference import VALID_MODELS
+
+VALID_MODELS: List[str] = [
+    "best_svm",
+    "best_xgboost",
+    "best_random_forest",
+    "best_histgradient",
+]
 
 # ---------------------------------------------------------------------------
 # Logging
