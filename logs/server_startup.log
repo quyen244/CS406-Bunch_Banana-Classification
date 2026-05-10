@@ -1,0 +1,27 @@
+[2026-05-10 17:40:20] === BẮT ĐẦU QUÁ TRÌNH KHỞI ĐỘNG HỆ THỐNG ===
+[2026-05-10 17:40:20] Đang chờ 10 giây để hệ thống ổn định mạng...
+[2026-05-10 17:40:30] Đang khởi chạy Cloudflared Tunnel: server-nha-lam...
+[2026-05-10 17:40:30] Lệnh khởi chạy Cloudflared đã được gửi vào background.
+[2026-05-10 17:40:35] Đang di chuyển đến thư mục dự án: D:/Projects/Assignment/LLM-AI-Assistant-Projects/BananaClassification
+[2026-05-10 17:40:35] Đang chạy docker-compose up -d...
+ Network banana_inference_network  Creating
+ Network banana_inference_network  Created
+ Container banana_ml_server  Creating
+ Container banana_dl_server  Creating
+ Container banana_ml_server  Created
+ Container banana_dl_server  Created
+ Container banana_gateway  Creating
+ Container banana_gateway  Created
+ Container banana_ml_server  Starting
+ Container banana_dl_server  Starting
+ Container banana_ml_server  Started
+ Container banana_dl_server  Started
+ Container banana_ml_server  Waiting
+ Container banana_dl_server  Waiting
+ Container banana_ml_server  Healthy
+ Container banana_dl_server  Healthy
+ Container banana_gateway  Starting
+ Container banana_gateway  Started
+[2026-05-10 17:40:55] Docker Compose đã khởi chạy thành công các container.
+[2026-05-10 17:40:55] === TOÀN BỘ QUY TRÌNH HOÀN TẤT ===
+-------------------------------------------
