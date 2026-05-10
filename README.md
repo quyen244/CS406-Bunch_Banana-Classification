@@ -6,13 +6,13 @@
 
 <h1 align="center"><b>CS406 - Nhập Môn Thị Giác Máy Tính</b></h1>
 
-# **CS406 — Phân Loại Nải Chuối: So Sánh ML & DL với Phương Pháp Tăng Cường Dữ Liệu WAAG**
+# **CS406 — Phân Loại Nải Chuối: So Sánh ML & DL với Phương Pháp Tăng Cường Dữ Liệu WAAGA**
 
 > Dự án nghiên cứu và thực nghiệm trong khuôn khổ môn học **CS406 - Nhập Môn Thị Giác Máy Tính**, tập trung vào hai mục tiêu chính:
 >
 > 1. **So sánh toàn diện** giữa các phương pháp **Machine Learning (ML)** truyền thống (HOG + LBP + màu sắc → SVM/XGBoost…) và **Deep Learning (DL)** hiện đại (VGG16, ResNet50, DenseNet121 với Transfer Learning) trên bài toán phân loại thu hoạch nải chuối.
 >
-> 2. **Đề xuất và thực nghiệm** phương pháp tăng cường dữ liệu **WAAG** *(Weather-Aware Augmentation via Generative models)* — ước lượng bối cảnh thời tiết tự động từ ảnh gốc, sinh ảnh tăng cường bằng mô hình **Stable Diffusion Inpainting** để bảo toàn 100% hình dáng buồng chuối, nhằm **vượt qua kết quả của bài báo gốc** trên cùng bộ dữ liệu.
+> 2. **Đề xuất và thực nghiệm** phương pháp tăng cường dữ liệu **WAAGA**  — ước lượng bối cảnh thời tiết tự động từ ảnh gốc, sinh ảnh tăng cường bằng mô hình **Stable Diffusion Inpainting** để bảo toàn 100% hình dáng buồng chuối, nhằm **vượt qua kết quả của bài báo gốc** trên cùng bộ dữ liệu.
 
 <p align="center">
   <img src="thumbnail.png" width="600" alt="thumbnail">
@@ -33,7 +33,7 @@
 * [Tổng Quan Bộ Dữ Liệu](#-tổng-quan-bộ-dữ-liệu)
 * [Phương Pháp ML](#-phương-pháp-machine-learning-ml)
 * [Phương Pháp DL](#-phương-pháp-deep-learning-dl)
-* [Phương Pháp WAAG](#-phương-pháp-tăng-cường-dữ-liệu-waag)
+* [Phương Pháp WAAGA](#-phương-pháp-tăng-cường-dữ-liệu-waaga)
 * [Chiến Lược Chia Dữ Liệu](#-chiến-lược-chia-dữ-liệu)
 * [Kết Quả So Sánh](#-kết-quả-so-sánh)
 * [Kiến Trúc Hệ Thống](#-kiến-trúc-hệ-thống)
@@ -166,9 +166,9 @@ Toàn bộ backbone được đóng băng (freeze), chỉ train phần header đ
 
 ---
 
-## 🌤 Phương Pháp Tăng Cường Dữ Liệu WAAG
+## 🌤 Phương Pháp Tăng Cường Dữ Liệu WAAGA
 
-**WAAG** *(Weather-Aware Augmentation via Generative models)* là phương pháp tăng cường dữ liệu bằng mô hình tạo sinh, hoạt động theo 3 bước chính:
+**WAAGA** : là phương pháp tăng cường dữ liệu bằng mô hình tạo sinh, hoạt động theo 3 bước chính:
 
 ### Bước 1 — Ước Lượng Ngữ Cảnh Thời Tiết
 - Chuyển ảnh sang không gian màu **HSV**.
@@ -206,7 +206,7 @@ Toàn bộ backbone được đóng băng (freeze), chỉ train phần header đ
 
 | Tập | Nội dung | Ghi chú |
 |---|---|---|
-| **Train (70%)** | Ảnh thực tế + **100% dữ liệu tạo sinh (WAAG)** | Tăng cường đa dạng bối cảnh |
+| **Train (70%)** | Ảnh thực tế + **100% dữ liệu tạo sinh (WAAGA)** | Tăng cường đa dạng bối cảnh |
 | **Validation (15%)** | **Chỉ ảnh thực tế gốc** | Ngăn data leakage |
 | **Test (15%)** | **Chỉ ảnh thực tế gốc** | Đảm bảo đánh giá công bằng |
 
@@ -226,9 +226,9 @@ Toàn bộ backbone được đóng băng (freeze), chỉ train phần header đ
 | ResNet50 | 0.7239 | 0.7045 | 0.9156 | 0.7963 |
 | DenseNet121 | 0.8085 | 0.8226 | 0.8608 | 0.8412 |
 | VGG16 | 0.8109 | 0.8093 | 0.8851 | 0.8455 |
-| **DenseNet121 + WAAG** ✨ | **0.8883** | **0.9227** | **0.8788** | **0.9002** |
+| **DenseNet121 + WAAGA** ✨ | **0.8883** | **0.9227** | **0.8788** | **0.9002** |
 
-> **Kết luận:** Phương pháp tăng cường WAAG kết hợp với DenseNet121 đạt **F1 = 0.9002**, vượt qua tất cả các mô hình baseline (cả ML lẫn DL) trên cùng bộ dữ liệu, đồng thời vượt kết quả bài báo gốc.
+> **Kết luận:** Phương pháp tăng cường WAAGA kết hợp với DenseNet121 đạt **F1 = 0.9002**, vượt qua tất cả các mô hình baseline (cả ML lẫn DL) trên cùng bộ dữ liệu, đồng thời vượt kết quả bài báo gốc.
 
 ---
 
@@ -276,7 +276,7 @@ graph TD
 | **API Gateway** | FastAPI, Uvicorn | Điều phối request, load balancing |
 | **DL Server** | TensorFlow 2.x, Keras (DenseNet121) | Inference Deep Learning |
 | **ML Server** | Scikit-learn, XGBoost, OpenCV | HOG/LBP extraction + ML inference |
-| **Augmentation** | Stable Diffusion Inpainting | Sinh ảnh tăng cường WAAG |
+| **Augmentation** | Stable Diffusion Inpainting | Sinh ảnh tăng cường WAAGA |
 | **DevOps** | Docker, Docker Compose | Đóng gói, quản lý microservices |
 
 ---
@@ -324,8 +324,9 @@ Hệ thống được triển khai **production** để người dùng có thể
 
 | Thành phần | Môi Trường | Địa Chỉ |
 |---|---|---|
-| **Frontend** | Vercel (Cloud) | *(đang cập nhật)* |
-| **API Gateway + Inference Servers** | Local Server (Docker) | *(đang cập nhật)* |
+| **Frontend** | Vercel (Cloud) | [https://cs-406-bunch-banana-classification.vercel.app/](https://cs-406-bunch-banana-classification.vercel.app/) |
+| **Public Endpoint (cloudflared)** | Local Server (Docker) + Cloudflared | [http://rexsantech.com](http://rexsantech.com) |
+| **API Gateway + Inference Servers** | Local Server (Docker) | [http://localhost:8080](http://localhost:8000) |
 
 > **Lưu ý:** Backend chạy trên máy cục bộ và expose qua public endpoint (tunnel/static IP). Frontend deploy trên Vercel trỏ đến backend đó, cho phép người dùng thực tế upload ảnh và nhận kết quả phân loại ngay trên trình duyệt mà không cần cài đặt bất kỳ thứ gì.
 
@@ -342,7 +343,7 @@ Hệ thống được triển khai **production** để người dùng có thể
 
 **Header điều khiển model:**
 ```
-X-Model-Type: dl    # Deep Learning (DenseNet121 + WAAG) — mặc định
+X-Model-Type: dl    # Deep Learning (DenseNet121 + WAAGA) — mặc định
 X-Model-Type: ml    # Machine Learning (HistGradient + HOG/LBP)
 ```
 
