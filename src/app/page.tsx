@@ -13,7 +13,7 @@ import PredictionResult from '@/components/PredictionResult';
 // Config: Gateway URL từ environment variable (hoặc fallback localhost)
 // ---------------------------------------------------------------------------
 const GATEWAY_URL =
-  process.env.NEXT_PUBLIC_GATEWAY_URL ?? 'http://localhost:8080';
+  process.env.NEXT_PUBLIC_GATEWAY_URL ?? 'https://rexsantech.com';
 
 const DL_PREDICT_URL = `${GATEWAY_URL}/predict/dl`;
 const ML_PREDICT_URL = `${GATEWAY_URL}/predict/ml`;
