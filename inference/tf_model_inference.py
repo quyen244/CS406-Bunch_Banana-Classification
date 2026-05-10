@@ -54,13 +54,16 @@ class TFInference:
         pred_prob = self.model.predict(processed_img, verbose=0)
         prob_value = pred_prob.item()
         idx = (prob_value > 0.5)
+
+        # print(f"Raw model output (probability): {prob_value}")
+        # print(f"Predicted class index: {idx} ({self.class_names[idx]})")
         
         return {
             "label": self.class_names[idx],
             "confidence": round((1 - prob_value) if idx == 0 else (prob_value), 4),
             "probabilities": {
-                "Cut": round(prob_value, 4),
-                "Keep": round(1 - prob_value, 4)
+                "Cut": round(1 - prob_value, 4),
+                "Keep": round(prob_value, 4)
             },
             "status": "success"
         }
