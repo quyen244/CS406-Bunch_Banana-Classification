@@ -77,10 +77,11 @@ class ImagePredictor:
 
     def _extract_features(self, img_rgb: np.ndarray) -> np.ndarray:
         """Trích xuất HOG + LBP + Color histograms + Color moments từ ảnh RGB."""
+        # 1. Tiền xử lý (Phải dùng img_res cho tất cả các bước sau)
         img_res = cv2.resize(img_rgb, self.resize_size)
         gray = cv2.cvtColor(img_res, cv2.COLOR_RGB2GRAY)
-
-        # HOG features
+    
+        # 2. HOG features (8100 features)
         hog_feat = hog(
             gray,
             orientations=9,
@@ -88,25 +89,36 @@ class ImagePredictor:
             cells_per_block=(2, 2),
             visualize=False,
         )
-
-        # LBP features
+    
+        # 3. LBP features (26 features)
+        # n_points = 24 -> Số bins chuẩn là n_points + 2 = 26
+        # Code cũ của bạn dùng np.arange(0, 28) tạo ra 27 bins -> Dư 1
         lbp = local_binary_pattern(gray, 24, 3, method="uniform")
-        lbp_hist, _ = np.histogram(lbp.ravel(), bins=np.arange(0, 28), range=(0, 27))
-        lbp_hist = lbp_hist.astype("float") / (lbp_hist.sum() + 1e-7)
-
-        # Color histograms (32 bins per channel)
-        hist_feat: List[float] = []
+        lbp_hist, _ = np.histogram(
+            lbp.ravel(), 
+            bins=np.arange(0, 27), # 0 đến 26 tạo ra 26 khoảng (bins)
+            range=(0, 26)
+        )
+        lbp_hist = lbp_hist.astype("float")
+        lbp_hist /= (lbp_hist.sum() + 1e-7)
+    
+        # 4. Color histograms (96 features: 32 bins * 3 channels)
+        # QUAN TRỌNG: Phải dùng img_res
+        hist_feat = []
         for i in range(3):
-            hist = cv2.calcHist([img_rgb], [i], None, [32], [0, 256])
+            hist = cv2.calcHist([img_res], [i], None, [32], [0, 256])
             cv2.normalize(hist, hist)
             hist_feat.extend(hist.flatten().tolist())
-
-        # Color moments (mean, std, skewness per channel)
-        moments: List[float] = []
+    
+        # 5. Color moments (9 features: 3 stats * 3 channels)
+        # QUAN TRỌNG: Phải dùng img_res
+        moments = []
         for i in range(3):
-            ch = img_rgb[:, :, i]
+            ch = img_res[:, :, i]
+            # Giữ nguyên kiểu ép kiểu float như code mẫu của bạn
             moments += [float(np.mean(ch)), float(np.std(ch)), float(skew(ch.flatten()))]
-
+    
+        # Kết hợp lại: 8100 + 26 + 96 + 9 = 8231
         features = np.hstack([hog_feat, lbp_hist, hist_feat, moments])
         return features
 
@@ -162,14 +174,18 @@ class ImagePredictor:
 
             # PCA transform (optional)
             if self.pca is not None:
-                features = self.pca.transform([features])[0]
+                features = self.pca.transform(features.reshape(1 , -1))
+
+            print("Features shape after PCA (if applied):", features.shape)
 
             # Scaling (optional)
             if self.scaler is not None:
-                features_2d = self.scaler.transform([features])
+                features_2d = self.scaler.transform(features)
             else:
-                features_2d = [features]
-
+                features_2d = features
+            
+            print("Features shape after scaling (if applied):", features_2d.shape)
+            
             # Inference
             model = self.models[model_name]
             pred = model.predict(features_2d)[0]
