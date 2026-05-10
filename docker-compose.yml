@@ -1,0 +1,116 @@
+# ==============================================================================
+# docker-compose.yml — Banana Classification Microservices
+#
+# Services:
+#   gateway   — API Gateway (port 8080, exposed to host)
+#   dl_server — TensorFlow CNN inference (port 8000, internal only)
+#   ml_server — Sklearn inference (port 8001, internal only)
+#
+# Shared volume:
+#   ./models → /models (read-only bind mount cho cả 2 inference servers)
+#
+# Usage:
+#   docker compose up -d --build
+#   docker compose logs -f
+#   docker compose down
+# ==============================================================================
+
+services:
+
+  # ============================================================
+  # Service 1: DL Server — TensorFlow/Keras CNN
+  # ============================================================
+  dl_server:
+    build:
+      context: .
+      dockerfile: dockerfile.tf_infer
+    image: banana-dl-server:latest
+    container_name: banana_dl_server
+    restart: unless-stopped
+    environment:
+      - MODEL_PATH=/models/dense_121_version_1.keras
+    volumes:
+      # Bind mount thư mục models từ host (read-only)
+      - ./models:/models:ro
+    networks:
+      - inference_net
+    # ─── GPU Configuration (NVIDIA) ──────────────────────────
+    # Yêu cầu: nvidia-container-toolkit phải được cài trên host
+    # Để chạy không có GPU, xóa toàn bộ block `deploy` bên dưới
+    # và đổi FROM trong dockerfile.tf_infer thành tensorflow/tensorflow:latest
+    deploy:
+      resources:
+        reservations:
+          devices:
+            - driver: nvidia
+              count: 1           # Dùng 1 GPU; đổi thành 'all' nếu muốn dùng tất cả
+              capabilities: [gpu]
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8000/health"]
+      interval: 20s
+      timeout: 15s
+      start_period: 60s   # TF cần thời gian load model
+      retries: 3
+
+  # ============================================================
+  # Service 2: ML Server — Sklearn
+  # ============================================================
+  ml_server:
+    build:
+      context: .
+      dockerfile: dockerfile.ml_infer
+    image: banana-ml-server:latest
+    container_name: banana_ml_server
+    restart: unless-stopped
+    environment:
+      - MODELS_DIR=/models
+      - SCALER_PATH=/models/scaler.pkl
+      - PCA_PATH=/models/pca.pkl
+    volumes:
+      - ./models:/models:ro
+    networks:
+      - inference_net
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8001/health"]
+      interval: 20s
+      timeout: 10s
+      start_period: 30s
+      retries: 3
+
+  # ============================================================
+  # Service 3: API Gateway
+  # ============================================================
+  gateway:
+    build:
+      context: .
+      dockerfile: Dockerfile.gateway
+    image: banana-gateway:latest
+    container_name: banana_gateway
+    restart: unless-stopped
+    ports:
+      - "8080:8080"    # Chỉ Gateway được expose ra ngoài host
+    environment:
+      - DL_SERVER_URL=http://dl_server:8000
+      - ML_SERVER_URL=http://ml_server:8001
+      - REQUEST_TIMEOUT=60.0
+    networks:
+      - inference_net
+    depends_on:
+      dl_server:
+        condition: service_healthy
+      ml_server:
+        condition: service_healthy
+    healthcheck:
+      test: ["CMD", "curl", "-f", "http://localhost:8080/health"]
+      interval: 15s
+      timeout: 5s
+      start_period: 15s
+      retries: 3
+
+# ==============================================================
+# Networks: Isolated internal network cho inference servers
+# ==============================================================
+networks:
+  inference_net:
+    driver: bridge
+    name: banana_inference_network

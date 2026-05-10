@@ -1,0 +1,47 @@
+# ==============================================================================
+# dockerfile.ml_infer — ML Inference Server (Sklearn)
+# Base: python:3.12-slim (như yêu cầu)
+# Port: 8001
+# ==============================================================================
+
+FROM python:3.12-slim
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Cài đặt system dependencies
+# - build-essential: cần cho một số wheel (scikit-image, scipy)
+# - libgl1-mesa-glx + libglib2.0-0: OpenCV headless cần
+# - curl: health check
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    build-essential \
+    libgl1 \
+    libglib2.0-0 \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cài đặt Python dependencies từ requirements.txt
+COPY requirements.txt .
+RUN pip install --no-cache-dir -r requirements.txt
+
+# Tạo thư mục chứa model (sẽ được mount từ host)
+RUN mkdir -p /models
+
+# Copy source code
+COPY ./inference /app/inference
+COPY ./src/ml_server /app/ml_server
+
+# Biến môi trường mặc định
+ENV MODELS_DIR="/models" \
+    SCALER_PATH="/models/scaler.pkl" \
+    PCA_PATH="/models/pca.pkl"
+
+# Health check
+HEALTHCHECK --interval=20s --timeout=10s --start-period=30s --retries=3 \
+    CMD curl -f http://localhost:8001/health || exit 1
+
+EXPOSE 8001
+
+CMD ["uvicorn", "ml_server.main:app", "--host", "0.0.0.0", "--port", "8001"]

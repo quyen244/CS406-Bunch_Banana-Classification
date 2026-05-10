@@ -1,0 +1,40 @@
+# ==============================================================================
+# Dockerfile.gateway — API Gateway Service
+# Base: python:3.12-slim (lightweight, không cần GPU hay ML libs)
+# Port: 8080
+# ==============================================================================
+
+FROM python:3.12-slim
+
+# Biến môi trường: tắt .pyc files, bật stdout logging tức thì
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1
+
+WORKDIR /app
+
+# Cài đặt dependencies hệ thống (libgomp cho scipy nếu cần)
+RUN apt-get update && apt-get install -y --no-install-recommends \
+    curl \
+    && rm -rf /var/lib/apt/lists/*
+
+# Cài đặt Python dependencies
+# Chỉ cần: FastAPI, httpx (forward requests), uvicorn, multipart
+RUN pip install --no-cache-dir \
+    fastapi==0.115.12 \
+    httpx==0.28.1 \
+    uvicorn[standard]==0.34.2 \
+    python-multipart==0.0.20 \
+    pydantic==2.11.4
+
+# Copy source code
+# Cần gateway package và inference package (để import VALID_MODELS)
+COPY ./src/gateway /app/gateway
+COPY ./inference /app/inference
+
+# Health check nội bộ container
+HEALTHCHECK --interval=15s --timeout=5s --start-period=10s --retries=3 \
+    CMD curl -f http://localhost:8080/health || exit 1
+
+EXPOSE 8080
+
+CMD ["uvicorn", "gateway.main:app", "--host", "0.0.0.0", "--port", "8080", "--workers", "2"]

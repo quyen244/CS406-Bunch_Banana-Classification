@@ -1,0 +1,188 @@
+#!/usr/bin/env bash
+# ==============================================================================
+# run.sh — Automation Script: Build Docker + Start Containers + Run Frontend
+#
+# Usage:
+#   chmod +x run.sh
+#   ./run.sh              # Build + start tất cả
+#   ./run.sh --no-build   # Chỉ start (bỏ qua build)
+#   ./run.sh --down       # Dừng và xóa containers
+# ==============================================================================
+
+set -euo pipefail
+
+# ── Colors ────────────────────────────────────────────────────────────────────
+RED='\033[0;31m'
+GREEN='\033[0;32m'
+YELLOW='\033[1;33m'
+BLUE='\033[0;34m'
+CYAN='\033[0;36m'
+NC='\033[0m' # No Color
+
+log_info()    { echo -e "${BLUE}[INFO]${NC}  $*"; }
+log_success() { echo -e "${GREEN}[OK]${NC}    $*"; }
+log_warn()    { echo -e "${YELLOW}[WARN]${NC}  $*"; }
+log_error()   { echo -e "${RED}[ERROR]${NC} $*"; }
+log_step()    { echo -e "\n${CYAN}══════════════════════════════════════════${NC}"; echo -e "${CYAN}  $*${NC}"; echo -e "${CYAN}══════════════════════════════════════════${NC}"; }
+
+# ── Argument Parsing ─────────────────────────────────────────────────────────
+NO_BUILD=false
+TEAR_DOWN=false
+
+for arg in "$@"; do
+  case $arg in
+    --no-build) NO_BUILD=true ;;
+    --down)     TEAR_DOWN=true ;;
+    *) log_warn "Unknown argument: $arg" ;;
+  esac
+done
+
+# ── Tear down mode ────────────────────────────────────────────────────────────
+if [ "$TEAR_DOWN" = true ]; then
+  log_step "🛑 Stopping and removing containers"
+  docker compose down --remove-orphans
+  log_success "All containers stopped."
+  exit 0
+fi
+
+# ── Prerequisites check ───────────────────────────────────────────────────────
+log_step "🔍 Checking prerequisites"
+
+if ! command -v docker &>/dev/null; then
+  log_error "Docker not found. Install Docker Desktop from https://www.docker.com/products/docker-desktop"
+  exit 1
+fi
+
+if ! docker compose version &>/dev/null; then
+  log_error "docker compose (V2) not found. Please update Docker Desktop."
+  exit 1
+fi
+
+if ! command -v node &>/dev/null; then
+  log_error "Node.js not found. Install from https://nodejs.org"
+  exit 1
+fi
+
+if ! command -v npm &>/dev/null; then
+  log_error "npm not found. Please install Node.js."
+  exit 1
+fi
+
+log_success "Docker: $(docker --version)"
+log_success "Node.js: $(node --version)"
+log_success "npm: $(npm --version)"
+
+# ── Verify model files ────────────────────────────────────────────────────────
+log_step "📁 Verifying model files in ./models/"
+
+REQUIRED_MODELS=(
+  "models/dense_121_version_1.keras"
+  "models/best_svm.pkl"
+  "models/best_xgboost.pkl"
+  "models/best_random_forest.pkl"
+  "models/best_histgradient.pkl"
+  "models/scaler.pkl"
+  "models/pca.pkl"
+)
+
+ALL_MODELS_OK=true
+for model_file in "${REQUIRED_MODELS[@]}"; do
+  if [ -f "$model_file" ]; then
+    log_success "Found: $model_file"
+  else
+    log_error "Missing: $model_file"
+    ALL_MODELS_OK=false
+  fi
+done
+
+if [ "$ALL_MODELS_OK" = false ]; then
+  log_error "One or more model files are missing. Aborting."
+  exit 1
+fi
+
+# ── Build Docker Images ───────────────────────────────────────────────────────
+if [ "$NO_BUILD" = false ]; then
+  log_step "🔨 Building Docker images"
+  docker compose build --parallel
+  log_success "All images built successfully."
+else
+  log_warn "Skipping build (--no-build flag set)"
+fi
+
+# ── Start Containers ──────────────────────────────────────────────────────────
+log_step "🚀 Starting Docker containers"
+docker compose up -d
+log_success "Containers started. Waiting for health checks..."
+
+# ── Wait for Gateway to be healthy ────────────────────────────────────────────
+log_step "⏳ Waiting for Gateway to be ready (max 120s)"
+
+GATEWAY_URL="http://localhost:8080/health"
+MAX_WAIT=120
+ELAPSED=0
+INTERVAL=5
+
+while [ $ELAPSED -lt $MAX_WAIT ]; do
+  if curl -sf "$GATEWAY_URL" > /dev/null 2>&1; then
+    log_success "Gateway is healthy! ($ELAPSED seconds elapsed)"
+    break
+  fi
+  echo -n "."
+  sleep $INTERVAL
+  ELAPSED=$((ELAPSED + INTERVAL))
+done
+
+if [ $ELAPSED -ge $MAX_WAIT ]; then
+  log_error "Gateway did not become healthy within ${MAX_WAIT}s."
+  log_error "Check logs with: docker compose logs"
+  exit 1
+fi
+
+# ── Show service status ───────────────────────────────────────────────────────
+log_step "📊 Service Status"
+docker compose ps
+
+echo ""
+log_info "Gateway health: $(curl -sf http://localhost:8080/health | python3 -m json.tool 2>/dev/null || echo 'N/A')"
+
+# ── Install Frontend Dependencies ─────────────────────────────────────────────
+log_step "📦 Installing Next.js dependencies"
+
+if [ ! -d "node_modules" ]; then
+  npm install
+  log_success "npm install complete."
+else
+  log_info "node_modules already exists. Skipping npm install."
+  log_info "Run 'npm install' manually if you need to update dependencies."
+fi
+
+# ── Update .env.local for Next.js ─────────────────────────────────────────────
+log_step "⚙️  Configuring Next.js environment"
+
+ENV_FILE=".env.local"
+if [ ! -f "$ENV_FILE" ]; then
+  cat > "$ENV_FILE" <<EOF
+# API Gateway URL (auto-generated by run.sh)
+NEXT_PUBLIC_GATEWAY_URL=http://localhost:8080
+EOF
+  log_success "Created $ENV_FILE"
+else
+  log_info "$ENV_FILE already exists. Not overwriting."
+fi
+
+# ── Start Next.js Dev Server ──────────────────────────────────────────────────
+log_step "🌐 Starting Next.js frontend"
+
+echo ""
+echo -e "${GREEN}╔══════════════════════════════════════════════╗${NC}"
+echo -e "${GREEN}║        🍌 Banana Classification System       ║${NC}"
+echo -e "${GREEN}╠══════════════════════════════════════════════╣${NC}"
+echo -e "${GREEN}║  Frontend:   http://localhost:3000           ║${NC}"
+echo -e "${GREEN}║  Gateway:    http://localhost:8080           ║${NC}"
+echo -e "${GREEN}║  API Docs:   http://localhost:8080/docs      ║${NC}"
+echo -e "${GREEN}╠══════════════════════════════════════════════╣${NC}"
+echo -e "${GREEN}║  Stop all:   Ctrl+C, then ./run.sh --down   ║${NC}"
+echo -e "${GREEN}╚══════════════════════════════════════════════╝${NC}"
+echo ""
+
+npm run dev

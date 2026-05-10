@@ -53,11 +53,11 @@ class TFInference:
 
         pred_prob = self.model.predict(processed_img, verbose=0)
         prob_value = pred_prob.item()
-        idx = (prob_value > 0.5).astype(int)
+        idx = (prob_value > 0.5)
         
         return {
             "label": self.class_names[idx],
-            "confidence": round(prob_value if idx == 0 else (1 - prob_value), 4),
+            "confidence": round((1 - prob_value) if idx == 0 else (prob_value), 4),
             "probabilities": {
                 "Cut": round(prob_value, 4),
                 "Keep": round(1 - prob_value, 4)

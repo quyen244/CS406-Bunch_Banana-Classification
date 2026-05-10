@@ -1,29 +1,47 @@
+# ==============================================================================
+# dockerfile.tf_infer — DL Inference Server (TensorFlow/Keras)
+# Base: tensorflow/tensorflow:latest-gpu (NVIDIA GPU required)
+# Port: 8000
+#
+# ⚠️  YÊU CẦU GPU: Máy host phải có NVIDIA GPU + nvidia-container-toolkit
+# Nếu không có GPU, thay dòng FROM thành:
+#   FROM tensorflow/tensorflow:latest
+# ==============================================================================
+
 FROM tensorflow/tensorflow:latest-gpu
 
 # Cài đặt system dependencies cho OpenCV
-RUN apt-get update && apt-get install -y \
+RUN apt-get update && apt-get install -y --no-install-recommends \
     libgl1-mesa-glx \
     libglib2.0-0 \
+    curl \
     && rm -rf /var/lib/apt/lists/*
 
 WORKDIR /app
 
-# Cài đặt thư viện Python (Thêm fastapi, uvicorn, multipart)
+# Cài đặt Python dependencies
 RUN pip install --no-cache-dir \
     opencv-python-headless \
     numpy \
-    fastapi \
-    uvicorn \
-    python-multipart
+    fastapi==0.115.12 \
+    uvicorn[standard]==0.34.2 \
+    python-multipart==0.0.20 \
+    pydantic==2.11.4
 
-# Tạo thư mục chứa model
-RUN mkdir /models
+# Tạo thư mục model (sẽ được mount từ host)
+RUN mkdir -p /models
 
-# Copy theo đúng cấu trúc bạn mô tả
-# /inference và /src/backend nằm cùng cấp ngoài máy thật
+# Copy source code
 COPY ./inference /app/inference
 COPY ./src/backend /app/backend
-# Nếu schema.py nằm trong src/backend thì đường dẫn import sẽ là .schema
 
-# Chạy server với Uvicorn (Chuẩn production hơn fastapi dev)
+# Biến môi trường mặc định
+ENV MODEL_PATH="/models/dense_121_version_1.keras"
+
+# Health check
+HEALTHCHECK --interval=20s --timeout=15s --start-period=60s --retries=3 \
+    CMD curl -f http://localhost:8000/health || exit 1
+
+EXPOSE 8000
+
 CMD ["uvicorn", "backend.main:app", "--host", "0.0.0.0", "--port", "8000"]
