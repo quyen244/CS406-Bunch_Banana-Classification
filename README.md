@@ -1,6 +1,31 @@
-# Banana Bunch Classification
+<p align="center">
+  <a href="https://www.uit.edu.vn/" title="University of Information Technology" style="border: none;">
+    <img src="https://i.imgur.com/WmMnSRt.png" alt="University of Information Technology (UIT)">
+  </a>
+</p>
 
-> A microservices system combining Deep Learning and Machine Learning to classify banana varieties from images. It integrates an API Gateway, GPU-optimized inference servers, and a Next.js frontend.
+<h1 align="center"><b>CS406 - Introduction to Computer Vision</b></h1>
+
+# **CS406 — Banana Bunch Classification: Comparing ML & DL with WAAGA Data Augmentation Method**
+
+> A research and experimental project within the framework of the course CS406 - Introduction to Computer Vision, focusing on two main objectives:
+
+> 1. **Comprehensive comparison** between traditional Machine Learning (ML) methods (HOG + LBP + color → SVM/XGBoost…) and modern Deep Learning (DL) (VGG16, ResNet50, DenseNet121 with Transfer Learning) for the problem of banana bunch harvest classification.
+
+> 2. **Proposal and experimentation** of the WAAGA data augmentation method — automatically estimating weather context from the original image and generating augmented images using the Stable Diffusion Inpainting model to preserve 100% of the banana bunch shape, aiming to surpass the results of the original paper on the same dataset.
+
+<p align="center">
+  <img src="thumbnail.png" width="600" alt="thumbnail">
+</p>
+
+---
+
+## 👥 Thông Tin Nhóm
+
+| STT | Student ID | Full Name | Role | Github | Email |
+| --- | --- | --- | --- | --- | --- |
+| 1 | 23521329 | Nguyễn Văn Quyền | Developer | [quyen244](https://github.com/quyen244) | 23521329@gm.uit.edu.vn |
+
 
 ---
 
