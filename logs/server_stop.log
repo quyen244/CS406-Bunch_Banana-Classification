@@ -15,3 +15,37 @@
  Network banana_inference_network  Removed
 SUCCESS: The process "cloudflared.exe" with PID 7352 has been terminated.
 [2026-05-10 17:43:56] --- ĐÃ TẮT TOÀN BỘ ---
+[2026-05-11 12:22:21] --- ĐANG TẮT HỆ THỐNG ---
+ Container banana_gateway  Stopping
+ Container banana_gateway  Stopped
+ Container banana_gateway  Removing
+ Container banana_gateway  Removed
+ Container banana_dl_server  Stopping
+ Container banana_ml_server  Stopping
+ Container banana_ml_server  Stopped
+ Container banana_ml_server  Removing
+ Container banana_ml_server  Removed
+ Container banana_dl_server  Stopped
+ Container banana_dl_server  Removing
+ Container banana_dl_server  Removed
+ Network banana_inference_network  Removing
+ Network banana_inference_network  Removed
+ERROR: The process "cloudflared.exe" not found.
+[2026-05-11 12:22:25] --- ĐÃ TẮT TOÀN BỘ ---
+[2026-05-11 17:28:44] --- ĐANG TẮT HỆ THỐNG ---
+ Container banana_gateway  Stopping
+ Container banana_gateway  Stopped
+ Container banana_gateway  Removing
+ Container banana_gateway  Removed
+ Container banana_ml_server  Stopping
+ Container banana_dl_server  Stopping
+ Container banana_ml_server  Stopped
+ Container banana_ml_server  Removing
+ Container banana_ml_server  Removed
+ Container banana_dl_server  Stopped
+ Container banana_dl_server  Removing
+ Container banana_dl_server  Removed
+ Network banana_inference_network  Removing
+ Network banana_inference_network  Removed
+ERROR: The process "cloudflared.exe" not found.
+[2026-05-11 17:28:49] --- ĐÃ TẮT TOÀN BỘ ---
